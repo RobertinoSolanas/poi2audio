@@ -268,6 +268,44 @@ document.getElementById("runBtn").addEventListener("click", runAlongRoute);
 document.getElementById("stopBtn").addEventListener("click", () => {
   paused = true;
   animating = false;
+
+  if (!bikeMarker) return;
+  const pos = bikeMarker.getLatLng();
+  const radius = 500; // meters
+
+  const query = `
+    [out:json];
+    (
+      node(around:${radius},${pos.lat},${pos.lng})[amenity];
+      way(around:${radius},${pos.lat},${pos.lng})[amenity];
+      relation(around:${radius},${pos.lat},${pos.lng})[amenity];
+    );
+    out center;
+  `;
+
+  fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: query
+  })
+    .then(res => res.json())
+    .then(data => {
+      const listEl = document.getElementById("poiList");
+      listEl.innerHTML = "";
+
+      if (data.elements.length === 0) {
+        listEl.innerHTML = "<li>No POIs found nearby.</li>";
+        return;
+      }
+
+      data.elements.forEach(el => {
+        const li = document.createElement("li");
+        li.textContent = el.tags && el.tags.name
+          ? `${el.tags.name} (${el.tags.amenity})`
+          : el.tags.amenity || "POI";
+        listEl.appendChild(li);
+      });
+    })
+    .catch(err => console.error("POI fetch error", err));
 });
 
 document.getElementById("continueBtn").addEventListener("click", () => {
