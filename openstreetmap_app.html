@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenStreetMap Web App</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #map {
+      width: 100%;
+      height: calc(100% - 50px);
+    }
+    #searchBar {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+    }
+    #searchInput {
+      flex: 1;
+      padding: 8px;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    #searchBtn {
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="searchBar">
+    <input type="text" id="searchInput" placeholder="Search for a location">
+    <button id="searchBtn">Search</button>
+  </div>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Initialize the map
+    const map = L.map('map').setView([51.505, -0.09], 13);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Add a marker
+    let marker = L.marker([51.505, -0.09]).addTo(map);
+    marker.bindPopup("<b>Hello!</b><br>This is a marker.").openPopup();
+
+    // Search handler
+    function searchLocation() {
+      const query = document.getElementById("searchInput").value;
+      if (!query) return;
+      
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            map.setView([lat, lon], 13);
+
+            if (marker) map.removeLayer(marker);
+            marker = L.marker([lat, lon]).addTo(map);
+            marker.bindPopup(`<b>${data[0].display_name}</b>`).openPopup();
+          } else {
+            alert("Location not found!");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Error fetching location!");
+        });
+    }
+
+    // Button click triggers search
+    document.getElementById("searchBtn").addEventListener("click", searchLocation);
+
+    // Pressing Enter also triggers search
+    document.getElementById("searchInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        searchLocation();
+      }
+    });
+  </script>
+</body>
+</html>
