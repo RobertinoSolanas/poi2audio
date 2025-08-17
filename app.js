@@ -69,11 +69,26 @@ function geocode(query) {
     });
 }
 
-// -------- Map click A/B selection --------
+ // -------- Map click A/B selection --------
 let startLatLng = null;
 let destLatLng = null;
 let startMarker = null;
 let destMarker = null;
+
+function reverseGeocode(latlng, callback) {
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.display_name) {
+        callback(data.display_name);
+      } else {
+        callback(`${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`);
+      }
+    })
+    .catch(() => {
+      callback(`${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`);
+    });
+}
 
 map.on("click", function (e) {
   if (!startLatLng) {
@@ -82,12 +97,24 @@ map.on("click", function (e) {
     if (startMarker) map.removeLayer(startMarker);
     startMarker = L.marker(startLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
       .addTo(map).bindPopup("Start (A)").openPopup();
+
+    // update Start input box
+    reverseGeocode(startLatLng, addr => {
+      document.getElementById("startInput").value = addr;
+    });
+
   } else if (!destLatLng) {
     // Second click sets DESTINATION
     destLatLng = e.latlng;
     if (destMarker) map.removeLayer(destMarker);
     destMarker = L.marker(destLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
       .addTo(map).bindPopup("Destination (B)").openPopup();
+
+    // update Destination input box
+    reverseGeocode(destLatLng, addr => {
+      document.getElementById("destInput").value = addr;
+    });
+
     control.setWaypoints([startLatLng, destLatLng]);
   } else {
     // Reset if both already set → new START
@@ -100,6 +127,12 @@ map.on("click", function (e) {
     }
     startMarker = L.marker(startLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
       .addTo(map).bindPopup("Start (A)").openPopup();
+
+    reverseGeocode(startLatLng, addr => {
+      document.getElementById("startInput").value = addr;
+      document.getElementById("destInput").value = "";
+    });
+
     control.setWaypoints([startLatLng, null]);
   }
 });
