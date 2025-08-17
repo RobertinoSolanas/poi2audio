@@ -26,6 +26,11 @@ function searchLocation() {
         if (marker) map.removeLayer(marker);
         marker = L.marker([lat, lon]).addTo(map);
         marker.bindPopup(`<b>${data[0].display_name}</b>`).openPopup();
+
+        // Update routing destination
+        const waypoints = control.getWaypoints();
+        waypoints[1] = L.latLng(lat, lon);
+        control.setWaypoints(waypoints);
       } else {
         alert("Location not found!");
       }
@@ -44,4 +49,18 @@ document.getElementById("searchInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     searchLocation();
   }
+// Routing control: start from Nürnberg by default
+const control = L.Routing.control({
+  waypoints: [
+    L.latLng(49.4521, 11.0767), // Nürnberg
+    null // destination user sets
+  ],
+  routeWhileDragging: true
+}).addTo(map);
+
+// Allow user to set destination by clicking on the map
+map.on('click', function(e) {
+  const waypoints = control.getWaypoints();
+  waypoints[1] = e.latlng;
+  control.setWaypoints(waypoints);
 });
