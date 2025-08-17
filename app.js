@@ -172,6 +172,11 @@ let routeCoords = [];
 let instructions = [];
 let currentInstructionIndex = 0;
 
+let paused = false;   // 🚦 new state
+let animating = false;
+let i = 0;            // index for animation
+let lastTime;         // remember timestamp for resume
+
 // Capture route when found
 control.on('routesfound', function(e) {
   const routes = e.routes;
@@ -203,10 +208,16 @@ function runAlongRoute() {
   if (bikeMarker) map.removeLayer(bikeMarker);
   bikeMarker = L.marker(routeCoords[0], { icon: bikeIcon }).addTo(map);
 
-  let lastTime;
-  let i = 0;
+  i = 0;
+  paused = false;
+  animating = true;
+  lastTime = null;
 
   function move(timestamp) {
+    if (paused) {
+      animating = false;
+      return; // stop loop until resumed
+    }
     if (!lastTime) {
       lastTime = timestamp;
       requestAnimationFrame(move);
@@ -222,11 +233,10 @@ function runAlongRoute() {
     const current = bikeMarker.getLatLng();
     const d = current.distanceTo(nextPoint);
 
-// Loop over route forever
+    // Loop over route forever
     if (distance >= d) {
       bikeMarker.setLatLng(nextPoint);
 
-      // 🔊 Speak instruction if reaching next step
       if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
         const text = instructions[currentInstructionIndex].text;
         speechSynthesis.speak(new SpeechSynthesisUtterance(text));
@@ -235,8 +245,8 @@ function runAlongRoute() {
 
       i++;
       if (i >= routeCoords.length) {
-        i = 0; // restart from beginning
-        currentInstructionIndex = 0; // reset audio instructions
+        i = 0; 
+        currentInstructionIndex = 0;
       }
       requestAnimationFrame(move);
     } else {
@@ -247,11 +257,56 @@ function runAlongRoute() {
       requestAnimationFrame(move);
     }
   }
+
   requestAnimationFrame(move);
 }
 
 // Run button handler
 document.getElementById("runBtn").addEventListener("click", runAlongRoute);
+
+// Stop / Continue handlers
+document.getElementById("stopBtn").addEventListener("click", () => {
+  paused = true;
+  animating = false;
+});
+
+document.getElementById("continueBtn").addEventListener("click", () => {
+  if (!animating && paused) {
+    paused = false;
+    animating = true;
+    requestAnimationFrame(function step(ts){ 
+      lastTime = ts; 
+      (function move(timestamp){
+        if (paused) { animating = false; return; }
+        if (!lastTime) { lastTime = timestamp; requestAnimationFrame(move); return; }
+        const delta = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+        const distance = speed * delta;
+        let nextPoint = routeCoords[i];
+        if (!nextPoint) return;
+        const current = bikeMarker.getLatLng();
+        const d = current.distanceTo(nextPoint);
+        if (distance >= d) {
+          bikeMarker.setLatLng(nextPoint);
+          if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
+            speechSynthesis.speak(new SpeechSynthesisUtterance(instructions[currentInstructionIndex].text));
+            currentInstructionIndex++;
+          }
+          i++;
+          if (i >= routeCoords.length) { i = 0; currentInstructionIndex = 0; }
+          requestAnimationFrame(move);
+        } else {
+          const ratio = distance / d;
+          bikeMarker.setLatLng([
+            current.lat + (nextPoint.lat - current.lat) * ratio,
+            current.lng + (nextPoint.lng - current.lng) * ratio
+          ]);
+          requestAnimationFrame(move);
+        }
+      })(ts);
+    });
+  }
+});
 
 // -------- Speed controls --------
 let speedKmh = 20;
