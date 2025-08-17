@@ -107,6 +107,16 @@ control.on('routesfound', function(e) {
   const routes = e.routes;
   if (routes.length > 0) {
     routeCoords = routes[0].coordinates; // array of {lat, lng}
+
+    // Extract instructions and list them
+    const instructions = routes[0].instructions;
+    const listEl = document.getElementById("directionsList");
+    listEl.innerHTML = "";
+    instructions.forEach(instr => {
+      const li = document.createElement("li");
+      li.textContent = instr.text;
+      listEl.appendChild(li);
+    });
   }
 });
 
