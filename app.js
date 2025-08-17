@@ -54,7 +54,8 @@ let control = L.Routing.control({
   waypoints: [],
   routeWhileDragging: true,
   router: L.Routing.osrmv1({
-    serviceUrl: 'https://router.project-osrm.org/route/v1/bicycle'
+    serviceUrl: 'https://router.project-osrm.org/route/v1',
+    profile: 'bicycle'
   })
 }).addTo(map);
 
@@ -121,7 +122,8 @@ map.on("click", function (e) {
     // update router with current mode
     const mode = document.getElementById("modeSelect").value;
     control.options.router = L.Routing.osrmv1({
-      serviceUrl: `https://router.project-osrm.org/route/v1/${mode}`
+      serviceUrl: 'https://router.project-osrm.org/route/v1',
+      profile: mode
     });
     control.setWaypoints([startLatLng, destLatLng]);
   } else {
@@ -164,7 +166,8 @@ document.getElementById("routeBtn").addEventListener("click", async () => {
     // Update router with selected mode
     const mode = document.getElementById("modeSelect").value;
     control.options.router = L.Routing.osrmv1({
-      serviceUrl: `https://router.project-osrm.org/route/v1/${mode}`
+      serviceUrl: 'https://router.project-osrm.org/route/v1',
+      profile: mode
     });
     control.setWaypoints([startLatLng, destLatLng]);
 
