@@ -41,28 +41,45 @@ function searchLocation() {
     });
 }
 
-// Button click triggers search
-document.getElementById("searchBtn").addEventListener("click", searchLocation);
-
-// Pressing Enter also triggers search
-document.getElementById("searchInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    searchLocation();
-  }
-});
-
-// Routing control: start from Nürnberg by default
+// Routing control: initially empty (no route)
 const control = L.Routing.control({
-  waypoints: [
-    L.latLng(49.4521, 11.0767), // Nürnberg
-    null // destination user sets
-  ],
+  waypoints: [],
   routeWhileDragging: true
 }).addTo(map);
 
-// Allow user to set destination by clicking on the map
-map.on('click', function(e) {
-  const waypoints = control.getWaypoints();
-  waypoints[1] = e.latlng;
-  control.setWaypoints(waypoints);
+// Function to geocode a query into coordinates
+function geocode(query) {
+  return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data && data.length > 0) {
+        return L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+      } else {
+        alert(`Location not found: ${query}`);
+        return null;
+      }
+    });
+}
+
+// Route button handler
+document.getElementById("routeBtn").addEventListener("click", async () => {
+  const startQuery = document.getElementById("startInput").value;
+  const destQuery = document.getElementById("destInput").value;
+
+  if (!startQuery || !destQuery) {
+    alert("Please enter both start and destination!");
+    return;
+  }
+
+  const startLatLng = await geocode(startQuery);
+  const destLatLng = await geocode(destQuery);
+
+  if (startLatLng && destLatLng) {
+    map.setView(startLatLng, 12);
+    control.setWaypoints([startLatLng, destLatLng]);
+
+    if (marker) map.removeLayer(marker);
+    marker = L.marker(destLatLng).addTo(map)
+      .bindPopup(`<b>${destQuery}</b>`).openPopup();
+  }
 });
