@@ -112,7 +112,6 @@ function runAlongRoute() {
   if (bikeMarker) map.removeLayer(bikeMarker);
   bikeMarker = L.marker(routeCoords[0], { icon: bikeIcon }).addTo(map);
 
-  const speed = 15 * 1000 / 3600; // 15 km/h in m/s
   let lastTime;
   let i = 0;
 
@@ -153,3 +152,40 @@ function runAlongRoute() {
 
 // Run button handler
 document.getElementById("runBtn").addEventListener("click", runAlongRoute);
+
+// -------- Speed controls --------
+let speedKmh = 20;
+let speed = speedKmh * 1000 / 3600;
+
+function updateSpeedDisplay() {
+  document.getElementById("speedDisplay").textContent = speedKmh + " km/h";
+  document.getElementById("speedInput").value = speedKmh;
+}
+
+document.getElementById("speedPlus").addEventListener("click", () => {
+  speedKmh += 5;
+  speed = speedKmh * 1000 / 3600;
+  updateSpeedDisplay();
+});
+
+document.getElementById("speedMinus").addEventListener("click", () => {
+  if (speedKmh > 5) {
+    speedKmh -= 5;
+    speed = speedKmh * 1000 / 3600;
+    updateSpeedDisplay();
+  }
+});
+
+document.getElementById("speedInput").addEventListener("change", (e) => {
+  const val = parseInt(e.target.value, 10);
+  if (!isNaN(val) && val >= 5) {
+    speedKmh = val;
+    speed = speedKmh * 1000 / 3600;
+    updateSpeedDisplay();
+  } else {
+    e.target.value = speedKmh;
+  }
+});
+
+// Initialize display
+updateSpeedDisplay();
