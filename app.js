@@ -7,8 +7,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // Add a marker
-let marker = L.marker([51.505, -0.09]).addTo(map);
-marker.bindPopup("<b>Hello!</b><br>This is a marker.").openPopup();
+let marker = L.marker([49.4521, 11.0767]).addTo(map);
+marker.bindPopup("<b>Willkommen in Nürnberg!</b>").openPopup();
 
 // Search handler
 function searchLocation() {
