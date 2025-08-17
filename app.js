@@ -41,6 +41,14 @@ function searchLocation() {
     });
 }
 
+// Bind search button and Enter key
+document.getElementById("searchBtn").addEventListener("click", searchLocation);
+document.getElementById("searchInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    searchLocation();
+  }
+});
+
 // Routing control: initially empty (no route)
 const control = L.Routing.control({
   waypoints: [],
