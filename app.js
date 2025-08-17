@@ -49,6 +49,8 @@ document.getElementById("searchInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     searchLocation();
   }
+});
+
 // Routing control: start from Nürnberg by default
 const control = L.Routing.control({
   waypoints: [
