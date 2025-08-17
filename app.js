@@ -69,6 +69,41 @@ function geocode(query) {
     });
 }
 
+// -------- Map click A/B selection --------
+let startLatLng = null;
+let destLatLng = null;
+let startMarker = null;
+let destMarker = null;
+
+map.on("click", function (e) {
+  if (!startLatLng) {
+    // First click sets START
+    startLatLng = e.latlng;
+    if (startMarker) map.removeLayer(startMarker);
+    startMarker = L.marker(startLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
+      .addTo(map).bindPopup("Start (A)").openPopup();
+  } else if (!destLatLng) {
+    // Second click sets DESTINATION
+    destLatLng = e.latlng;
+    if (destMarker) map.removeLayer(destMarker);
+    destMarker = L.marker(destLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/red-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
+      .addTo(map).bindPopup("Destination (B)").openPopup();
+    control.setWaypoints([startLatLng, destLatLng]);
+  } else {
+    // Reset if both already set → new START
+    startLatLng = e.latlng;
+    destLatLng = null;
+    if (startMarker) map.removeLayer(startMarker);
+    if (destMarker) {
+      map.removeLayer(destMarker);
+      destMarker = null;
+    }
+    startMarker = L.marker(startLatLng, { icon: L.icon({ iconUrl: "https://maps.gstatic.com/mapfiles/ms2/micons/green-dot.png", iconSize: [32, 32], iconAnchor: [16, 32] }) })
+      .addTo(map).bindPopup("Start (A)").openPopup();
+    control.setWaypoints([startLatLng, null]);
+  }
+});
+
 // Route button handler
 document.getElementById("routeBtn").addEventListener("click", async () => {
   const startQuery = document.getElementById("startInput").value;
