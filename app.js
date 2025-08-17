@@ -207,6 +207,14 @@ control.on('routesfound', function(e) {
     // Show instructions in panel
     const listEl = document.getElementById("directionsList");
     listEl.innerHTML = "";
+
+    // Add mode label before instructions
+    const mode = document.getElementById("modeSelect").value;
+    const modeLabel = document.createElement("li");
+    modeLabel.textContent = "Mode: " + (mode === "bicycle" ? "Bike" : mode === "driving" ? "Car" : "Walker");
+    modeLabel.style.fontWeight = "bold";
+    listEl.appendChild(modeLabel);
+
     instructions.forEach(instr => {
       const li = document.createElement("li");
       li.textContent = instr.text;
