@@ -92,28 +92,29 @@ const bikeIcon = L.icon({
 });
 
 let bikeMarker = null;
+let routeCoords = [];
+
+// Capture route when found
+control.on('routesfound', function(e) {
+  const routes = e.routes;
+  if (routes.length > 0) {
+    routeCoords = routes[0].coordinates; // array of {lat, lng}
+  }
+});
 
 // Function to animate along route with realistic speed
 function runAlongRoute() {
-  const line = control._line ? control._line : null;
-
-  if (!line) {
+  if (!routeCoords || routeCoords.length === 0) {
     alert("Please calculate a route first!");
     return;
   }
 
-  const latlngs = line.getLatLngs();
-  if (latlngs.length === 0) {
-    alert("No route found!");
-    return;
-  }
-
-  let i = 0;
   if (bikeMarker) map.removeLayer(bikeMarker);
-  bikeMarker = L.marker(latlngs[0], { icon: bikeIcon }).addTo(map);
+  bikeMarker = L.marker(routeCoords[0], { icon: bikeIcon }).addTo(map);
 
   const speed = 15 * 1000 / 3600; // 15 km/h in m/s
   let lastTime;
+  let i = 0;
 
   function move(timestamp) {
     if (!lastTime) {
@@ -121,11 +122,11 @@ function runAlongRoute() {
       requestAnimationFrame(move);
       return;
     }
-    const delta = (timestamp - lastTime) / 1000; // seconds since last frame
+    const delta = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
 
     const distance = speed * delta;
-    let nextPoint = latlngs[i];
+    let nextPoint = routeCoords[i];
     if (!nextPoint) return;
 
     const current = bikeMarker.getLatLng();
@@ -134,7 +135,7 @@ function runAlongRoute() {
     if (distance >= d) {
       bikeMarker.setLatLng(nextPoint);
       i++;
-      if (i < latlngs.length) {
+      if (i < routeCoords.length) {
         requestAnimationFrame(move);
       }
     } else {
