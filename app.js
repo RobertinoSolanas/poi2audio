@@ -229,52 +229,51 @@ function runAlongRoute() {
   paused = false;
   animating = true;
   lastTime = null;
+  requestAnimationFrame(move);
+}
 
-  function move(timestamp) {
-    if (paused) {
-      animating = false;
-      return; // stop loop until resumed
-    }
-    if (!lastTime) {
-      lastTime = timestamp;
-      requestAnimationFrame(move);
-      return;
-    }
-    const delta = (timestamp - lastTime) / 1000;
-    lastTime = timestamp;
-
-    const distance = speed * delta;
-    let nextPoint = routeCoords[i];
-    if (!nextPoint) return;
-
-    const current = bikeMarker.getLatLng();
-    const d = current.distanceTo(nextPoint);
-
-    // Loop over route forever
-    if (distance >= d) {
-      bikeMarker.setLatLng(nextPoint);
-
-      if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
-        const text = instructions[currentInstructionIndex].text;
-        speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-        currentInstructionIndex++;
-      }
-
-      i++;
-      if (i >= routeCoords.length) {
-        i = 0; 
-        currentInstructionIndex = 0;
-      }
-      requestAnimationFrame(move);
-    } else {
-      const ratio = distance / d;
-      const newLat = current.lat + (nextPoint.lat - current.lat) * ratio;
-      const newLng = current.lng + (nextPoint.lng - current.lng) * ratio;
-      bikeMarker.setLatLng([newLat, newLng]);
-      requestAnimationFrame(move);
-    }
+function move(timestamp) {
+  if (paused) {
+    animating = false;
+    return; // stop loop until resumed
   }
+  if (!lastTime) {
+    lastTime = timestamp;
+    requestAnimationFrame(move);
+    return;
+  }
+  const delta = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
 
+  const distance = speed * delta;
+  let nextPoint = routeCoords[i];
+  if (!nextPoint) return;
+
+  const current = bikeMarker.getLatLng();
+  const d = current.distanceTo(nextPoint);
+
+  // Loop over route forever
+  if (distance >= d) {
+    bikeMarker.setLatLng(nextPoint);
+
+    if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
+      const text = instructions[currentInstructionIndex].text;
+      speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+      currentInstructionIndex++;
+    }
+
+    i++;
+    if (i >= routeCoords.length) {
+      i = 0; 
+      currentInstructionIndex = 0;
+    }
+  } else {
+    const ratio = distance / d;
+    bikeMarker.setLatLng([
+      current.lat + (nextPoint.lat - current.lat) * ratio,
+      current.lng + (nextPoint.lng - current.lng) * ratio
+    ]);
+  }
   requestAnimationFrame(move);
 }
 
@@ -325,41 +324,13 @@ document.getElementById("stopBtn").addEventListener("click", () => {
     .catch(err => console.error("POI fetch error", err));
 });
 
+// Continue handler
 document.getElementById("continueBtn").addEventListener("click", () => {
   if (!animating && paused) {
     paused = false;
     animating = true;
-    requestAnimationFrame(function step(ts){ 
-      lastTime = ts; 
-      (function move(timestamp){
-        if (paused) { animating = false; return; }
-        if (!lastTime) { lastTime = timestamp; requestAnimationFrame(move); return; }
-        const delta = (timestamp - lastTime) / 1000;
-        lastTime = timestamp;
-        const distance = speed * delta;
-        let nextPoint = routeCoords[i];
-        if (!nextPoint) return;
-        const current = bikeMarker.getLatLng();
-        const d = current.distanceTo(nextPoint);
-        if (distance >= d) {
-          bikeMarker.setLatLng(nextPoint);
-          if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
-            speechSynthesis.speak(new SpeechSynthesisUtterance(instructions[currentInstructionIndex].text));
-            currentInstructionIndex++;
-          }
-          i++;
-          if (i >= routeCoords.length) { i = 0; currentInstructionIndex = 0; }
-          requestAnimationFrame(move);
-        } else {
-          const ratio = distance / d;
-          bikeMarker.setLatLng([
-            current.lat + (nextPoint.lat - current.lat) * ratio,
-            current.lng + (nextPoint.lng - current.lng) * ratio
-          ]);
-          requestAnimationFrame(move);
-        }
-      })(ts);
-    });
+    lastTime = null; // reset frame timing
+    requestAnimationFrame(move);
   }
 });
 
