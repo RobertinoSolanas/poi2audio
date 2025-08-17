@@ -101,6 +101,8 @@ const bikeIcon = L.icon({
 
 let bikeMarker = null;
 let routeCoords = [];
+let instructions = [];
+let currentInstructionIndex = 0;
 
 // Capture route when found
 control.on('routesfound', function(e) {
@@ -108,8 +110,11 @@ control.on('routesfound', function(e) {
   if (routes.length > 0) {
     routeCoords = routes[0].coordinates; // array of {lat, lng}
 
-    // Extract instructions and list them
-    const instructions = routes[0].instructions;
+    // Extract instructions list and reset index
+    instructions = routes[0].instructions;
+    currentInstructionIndex = 0;
+
+    // Show instructions in panel
     const listEl = document.getElementById("directionsList");
     listEl.innerHTML = "";
     instructions.forEach(instr => {
@@ -152,9 +157,18 @@ function runAlongRoute() {
 // Loop over route forever
     if (distance >= d) {
       bikeMarker.setLatLng(nextPoint);
+
+      // 🔊 Speak instruction if reaching next step
+      if (currentInstructionIndex < instructions.length && i >= instructions[currentInstructionIndex].index) {
+        const text = instructions[currentInstructionIndex].text;
+        speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+        currentInstructionIndex++;
+      }
+
       i++;
       if (i >= routeCoords.length) {
         i = 0; // restart from beginning
+        currentInstructionIndex = 0; // reset audio instructions
       }
       requestAnimationFrame(move);
     } else {
