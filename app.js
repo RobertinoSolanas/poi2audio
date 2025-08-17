@@ -132,12 +132,14 @@ function runAlongRoute() {
     const current = bikeMarker.getLatLng();
     const d = current.distanceTo(nextPoint);
 
+// Loop over route forever
     if (distance >= d) {
       bikeMarker.setLatLng(nextPoint);
       i++;
-      if (i < routeCoords.length) {
-        requestAnimationFrame(move);
+      if (i >= routeCoords.length) {
+        i = 0; // restart from beginning
       }
+      requestAnimationFrame(move);
     } else {
       const ratio = distance / d;
       const newLat = current.lat + (nextPoint.lat - current.lat) * ratio;
