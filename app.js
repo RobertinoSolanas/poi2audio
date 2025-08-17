@@ -50,9 +50,12 @@ document.getElementById("searchInput").addEventListener("keydown", (e) => {
 });
 
 // Routing control: initially empty (no route)
-const control = L.Routing.control({
+let control = L.Routing.control({
   waypoints: [],
-  routeWhileDragging: true
+  routeWhileDragging: true,
+  router: L.Routing.osrmv1({
+    serviceUrl: 'https://router.project-osrm.org/route/v1/bicycle'
+  })
 }).addTo(map);
 
 // Function to geocode a query into coordinates
@@ -115,6 +118,11 @@ map.on("click", function (e) {
       document.getElementById("destInput").value = addr;
     });
 
+    // update router with current mode
+    const mode = document.getElementById("modeSelect").value;
+    control.options.router = L.Routing.osrmv1({
+      serviceUrl: `https://router.project-osrm.org/route/v1/${mode}`
+    });
     control.setWaypoints([startLatLng, destLatLng]);
   } else {
     // Reset if both already set → new START
@@ -152,11 +160,17 @@ document.getElementById("routeBtn").addEventListener("click", async () => {
 
   if (startLatLng && destLatLng) {
     map.setView(startLatLng, 12);
+
+    // Update router with selected mode
+    const mode = document.getElementById("modeSelect").value;
+    control.options.router = L.Routing.osrmv1({
+      serviceUrl: `https://router.project-osrm.org/route/v1/${mode}`
+    });
     control.setWaypoints([startLatLng, destLatLng]);
 
     if (marker) map.removeLayer(marker);
     marker = L.marker(destLatLng).addTo(map)
-      .bindPopup(`<b>${destQuery}</b>`).openPopup();
+      .bindPopup(`<b>${destQuery}</b><br>Mode: ${mode}`).openPopup();
   }
 });
 
